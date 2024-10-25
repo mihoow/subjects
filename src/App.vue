@@ -1,52 +1,45 @@
 <template>
-  <div class="min-h-screen bg-gray-100 py-6 flex flex-col justify-center sm:py-12">
-    <div class="relative py-3 sm:max-w-xl sm:mx-auto">
-      <div class="absolute inset-0 bg-gradient-to-r from-cyan-400 to-light-blue-500 shadow-lg transform -skew-y-6 sm:skew-y-0 sm:-rotate-6 sm:rounded-3xl"></div>
-      <div class="relative px-4 py-10 bg-white shadow-lg sm:rounded-3xl sm:p-20">
-        <div class="max-w-md mx-auto">
-          <h1 class="text-2xl font-semibold text-center mb-6">
-            {{ greeting }}
-          </h1>
-          <button
-            @click="changeGreeting"
-            class="w-full py-2 px-4 bg-blue-500 text-white font-semibold rounded-lg shadow-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-opacity-75"
-          >
-            Change Greeting
-          </button>
+  <div class="min-h-screen bg-gray-100 flex flex-col p-4">
+    <header class="w-full bg-red-600 p-4 relative overflow-hidden rounded-2xl mx-auto mt-4 max-w-7xl header-glow">
+      <nav class="relative z-10 flex justify-between items-center">
+        <router-link to="/" class="text-white font-semibold hover:text-red-200 transition-colors duration-300 flex items-center">
+          <HomeIcon class="h-6 w-6 mr-2" />
+          Domowe ognisko
+        </router-link>
+        <div>
+          <a href="https://example.com/zjazdy" target="_blank" rel="noopener noreferrer" class="text-white font-semibold mr-6 hover:text-red-200 transition-colors duration-300">
+            Zjazdy
+          </a>
+          <a href="https://example.com/plan-zajec" target="_blank" rel="noopener noreferrer" class="text-white font-semibold hover:text-red-200 transition-colors duration-300">
+            Plan zajęć
+          </a>
         </div>
-      </div>
-    </div>
+      </nav>
+    </header>
+    <main class="flex-grow py-6 sm:py-12">
+      <router-view></router-view>
+    </main>
   </div>
 </template>
 
 <script>
-import { ref } from 'vue'
+import { HomeIcon } from '@heroicons/vue/24/solid'
 
 export default {
   name: 'App',
-
-  setup() {
-    const greeting = ref('Hello, Vue with Tailwind!')
-
-    const changeGreeting = () => {
-      greeting.value = 'Welcome to Vue.js and Tailwind CSS!'
-    }
-
-    return {
-      greeting,
-      changeGreeting,
-    }
+  components: {
+    HomeIcon
   }
 }
 </script>
 
 <style>
-#app {
-  font-family: Avenir, Helvetica, Arial, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  text-align: center;
-  color: #2c3e50;
-  margin-top: 60px;
+.header-glow {
+  box-shadow: 
+    0 0 10px rgba(255, 0, 0, 0.3),
+    0 0 20px rgba(255, 0, 0, 0.3),
+    0 0 30px rgba(255, 0, 0, 0.3),
+    0 0 40px rgba(255, 0, 0, 0.3),
+    0 0 70px rgba(255, 0, 0, 0.3);
 }
 </style>
