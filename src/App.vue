@@ -18,6 +18,8 @@
 <script>
 import Sidebar from './components/Sidebar.vue'
 import Header from './components/Header.vue'
+import { db } from './firebase'
+import { collection, getDocs } from 'firebase/firestore'
 
 export default {
   name: 'App',
@@ -25,6 +27,36 @@ export default {
     Sidebar,
     Header
   },
+
+  data() {
+    return {
+      subjects: []
+    }
+  },
+
+  provide() {
+    return {
+      subjects: this.subjects
+    }
+  },
+
+  methods: {
+    async fetchSubjects() {
+      try {
+        const querySnapshot = await getDocs(collection(db, 'subjects'))
+        this.subjects = querySnapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        }))
+      } catch (error) {
+        console.error('Error fetching subjects:', error)
+      }
+    }
+  },
+
+  mounted() {
+    this.fetchSubjects()
+  }
 }
 </script>
 
