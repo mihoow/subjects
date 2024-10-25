@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen bg-gray-100 flex flex-col p-4">
+  <div class="min-h-screen bg-gray-900 text-gray-100 flex flex-col p-4">
     <header class="w-full bg-red-600 p-4 relative overflow-hidden rounded-2xl mx-auto mt-4 max-w-7xl header-glow">
       <nav class="relative z-10 flex justify-between items-center">
         <router-link to="/" class="text-white font-semibold hover:text-red-200 transition-colors duration-300 flex items-center">
@@ -34,6 +34,10 @@ export default {
 </script>
 
 <style>
+body {
+  @apply bg-gray-900;
+}
+
 .header-glow {
   box-shadow: 
     0 0 10px rgba(255, 0, 0, 0.3),
