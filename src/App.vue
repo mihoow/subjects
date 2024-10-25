@@ -1,34 +1,40 @@
 <template>
-  <div class="min-h-screen bg-gray-900 text-gray-100 flex flex-col p-4">
-    <header class="w-full bg-red-600 p-4 relative overflow-hidden rounded-2xl mx-auto mt-4 max-w-7xl header-glow">
-      <nav class="relative z-10 flex justify-between items-center">
-        <router-link to="/" class="text-white font-semibold hover:text-red-200 transition-colors duration-300 flex items-center">
-          <HomeIcon class="h-6 w-6 mr-2" />
-          Domowe ognisko
-        </router-link>
-        <div>
-          <a href="https://example.com/zjazdy" target="_blank" rel="noopener noreferrer" class="text-white font-semibold mr-6 hover:text-red-200 transition-colors duration-300">
-            Zjazdy
-          </a>
-          <a href="https://example.com/plan-zajec" target="_blank" rel="noopener noreferrer" class="text-white font-semibold hover:text-red-200 transition-colors duration-300">
-            Plan zajęć
-          </a>
-        </div>
-      </nav>
-    </header>
-    <main class="flex-grow py-6 sm:py-12">
-      <router-view></router-view>
-    </main>
+  <div class="min-h-screen bg-gray-900 text-gray-100 flex p-10 relative">
+    <Sidebar class="z-20" />
+    <div
+      ref="mainContent"
+      class="flex-1 flex flex-col ml-56 relative"
+    >
+      <div class="flex justify-end mb-6 relative z-30">
+        <Header />
+      </div>
+      <main class="flex-grow bg-gray-800 rounded-2xl p-6 pl-16 text-gray-100 shadow-lg relative z-10">
+        <router-view></router-view>
+      </main>
+    </div>
   </div>
 </template>
 
 <script>
-import { HomeIcon } from '@heroicons/vue/24/solid'
+import Sidebar from './components/Sidebar.vue'
+import Header from './components/Header.vue'
 
 export default {
   name: 'App',
   components: {
-    HomeIcon
+    Sidebar,
+    Header
+  },
+  data() {
+    return {
+      isLoaded: false
+    }
+  },
+  mounted() {
+    // Trigger the animation after a short delay to ensure DOM is ready
+    setTimeout(() => {
+      this.isLoaded = true
+    }, 100)
   }
 }
 </script>
