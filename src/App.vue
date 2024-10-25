@@ -3,12 +3,12 @@
     <Sidebar class="z-20" />
     <div
       ref="mainContent"
-      class="flex-1 flex flex-col ml-56 relative"
+      class="flex-1 flex flex-col ml-56 relative overflow-hidden"
     >
       <div class="flex justify-end mb-6 relative z-30">
         <Header />
       </div>
-      <main class="flex-grow bg-gray-800 rounded-2xl p-6 pl-16 text-gray-100 shadow-lg relative z-10">
+      <main class="flex-grow bg-gray-800 rounded-2xl p-6 pl-16 text-gray-100 shadow-lg relative z-10 overflow-y-auto" style="max-height: calc(100vh - 180px);">
         <router-view></router-view>
       </main>
     </div>
@@ -25,23 +25,12 @@ export default {
     Sidebar,
     Header
   },
-  data() {
-    return {
-      isLoaded: false
-    }
-  },
-  mounted() {
-    // Trigger the animation after a short delay to ensure DOM is ready
-    setTimeout(() => {
-      this.isLoaded = true
-    }, 100)
-  }
 }
 </script>
 
 <style>
 body {
-  @apply bg-gray-900;
+  @apply bg-gray-900 overflow-hidden;
 }
 
 .header-glow {
