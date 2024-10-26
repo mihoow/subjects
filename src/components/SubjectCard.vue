@@ -17,7 +17,7 @@
       </ul>
     </div>
     <router-link
-      to="/hello"
+      :to="{ name: 'Subject', params: { subjectId: id }}"
       class="block w-full bg-gray-700 text-gray-300 py-2 px-4 hover:bg-gray-600 transition-colors duration-200 text-center mt-auto"
     >
       More
@@ -45,3 +45,4 @@ export default {
   },
 };
 </script>
+

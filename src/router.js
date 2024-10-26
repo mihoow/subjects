@@ -1,13 +1,20 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import HomePage from './views/HomePage.vue'
+import SubjectPage from './views/SubjectPage.vue'
 
 const routes = [
   {
     path: '/',
     name: 'DomoweOgnisko',
-    component: HomePage
+    component: HomePage,
+    pathMatch: 'full'
   },
-  // Add other internal routes here
+  {
+    path: '/subject/:subjectId',
+    name: 'Subject',
+    component: SubjectPage,
+    props: true
+  }
 ]
 
 const router = createRouter({

@@ -16,6 +16,7 @@
       <SubjectCard
         v-for="subject in subjects"
         :key="subject.id"
+        :id="subject.id"
         :title="subject.title"
         :topics="subject.topics"
       />
@@ -111,3 +112,4 @@ export default {
   }
 }
 </script>
+
