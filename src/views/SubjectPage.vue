@@ -1,90 +1,112 @@
 <template>
   <div class="text-white">
     <div v-if="subject">
-      <h1 class="text-4xl font-bold mb-6">{{ subject.title }}</h1>
-
-      <div class="flex justify-end mb-4">
+      <div class="flex justify-between items-center mb-6">
+        <h1 class="text-4xl font-bold">{{ subject.name }}</h1>
         <button
-          @click="addSection"
+          @click="openModal"
           class="bg-green-500 text-white px-4 py-2 rounded-md flex items-center hover:bg-green-600 transition-colors duration-200"
         >
           <PlusIcon class="h-5 w-5 mr-2" />
-          Add Section
+          Dodaj sekcję
         </button>
       </div>
-      <div v-if="loading">Loading sections...</div>
+
+      <div v-if="loading">Ładowanie sekcji...</div>
       <SectionGrid
         v-else
         :sections="allSections"
+        :specialSections="['topics', 'mainBody']"
+        @edit="openEditModal"
+        @delete="openDeleteModal"
+        @toggle-item="handleToggleItem"
       />
 
       <button
         @click="$router.push('/')"
         class="mt-8 bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 transition-colors duration-200"
       >
-        Back to Subjects
+        Powrót do listy przedmiotów
       </button>
 
-      <!-- Add Section Modal -->
-      <div
-        v-if="showSectionModal"
-        class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center"
-        @click="handleOutsideSectionClick"
+      <Modal
+        :isOpen="showSectionModal"
+        title="Add New Section"
+        submitButtonText="Add"
+        @close="cancelAddSection"
+        @submit="confirmAddSection"
       >
-        <div class="bg-gray-800 text-white p-6 rounded-lg shadow-lg w-full max-w-2xl">
-          <h2 class="text-2xl font-bold mb-4">Add New Section</h2>
-          <input
-            v-model="newSectionTitle"
-            type="text"
-            placeholder="Enter section title"
-            class="w-full p-2 bg-gray-700 border border-gray-600 rounded mb-4 text-white placeholder-gray-400"
-          />
-          <textarea
-            v-model="newSectionContent"
-            placeholder="Enter markdown content"
-            rows="10"
-            class="w-full p-2 bg-gray-700 border border-gray-600 rounded mb-4 text-white placeholder-gray-400"
-          ></textarea>
-          <div class="flex justify-end">
-            <button
-              @click="cancelAddSection"
-              class="mr-2 px-4 py-2 bg-gray-700 rounded hover:bg-gray-600 transition-colors duration-200"
-            >
-              Cancel
-            </button>
-            <button
-              @click="confirmAddSection"
-              class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition-colors duration-200"
-            >
-              Add
-            </button>
-          </div>
-        </div>
-      </div>
+        <input
+          v-model="newSectionTitle"
+          type="text"
+          placeholder="Enter section title"
+          class="w-full p-2 bg-gray-700 border border-gray-600 rounded mb-4 text-white placeholder-gray-400"
+        />
+        <textarea
+          v-model="newSectionContent"
+          placeholder="Enter markdown content"
+          rows="10"
+          class="w-full p-2 bg-gray-700 border border-gray-600 rounded mb-4 text-white placeholder-gray-400"
+        ></textarea>
+      </Modal>
+
+      <EditMarkdownSectionModal
+        v-if="showMarkdownEditModal"
+        :isOpen="showMarkdownEditModal"
+        :section="currentSection"
+        @close="closeEditModal"
+        @submit="updateSection"
+      />
+
+      <EditChecklistSectionModal
+        v-if="showChecklistEditModal"
+        :isOpen="showChecklistEditModal"
+        :section="currentSection"
+        @close="closeEditModal"
+        @submit="updateSection"
+      />
+
+      <DeleteSectionModal
+        v-if="showDeleteModal"
+        :isOpen="showDeleteModal"
+        :section="currentSection"
+        @close="closeDeleteModal"
+        @submit="confirmDeleteSection"
+      />
     </div>
-    <div v-else-if="loading" class="text-center">
-      <p class="text-2xl">Loading subject...</p>
+    <div
+      v-else-if="loading"
+      class="text-center"
+    >
+      <p class="text-2xl">Ładowanie przedmiotu...</p>
     </div>
-    <div v-else class="text-center">
-      <p class="text-2xl">Subject not found</p>
+    <div
+      v-else
+      class="text-center"
+    >
+      <p class="text-2xl">Nie znaleziono przedmiotu</p>
       <button
         @click="$router.push('/')"
         class="mt-4 bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 transition-colors duration-200"
       >
-        Back to Subjects
+        Powrót do listy przedmiotów
       </button>
     </div>
   </div>
 </template>
 
 <script>
-import { ref, onMounted, computed } from 'vue';
+import { ref, onMounted, computed, nextTick } from 'vue';
 import { useRoute } from 'vue-router';
 import { PlusIcon } from '@heroicons/vue/24/solid';
 import { useSubjects } from '@/providers/SubjectProvider';
-import { collection, getDocs, addDoc } from 'firebase/firestore';
+import { collection, getDocs, addDoc, updateDoc, doc, deleteDoc, getDoc } from 'firebase/firestore';
 import { db } from '@/firebase';
 import SectionGrid from '@/components/SectionGrid.vue';
+import Modal from '@/components/Modal.vue';
+import EditMarkdownSectionModal from '@/components/modals/EditMarkdownSectionModal.vue';
+import EditChecklistSectionModal from '@/components/modals/EditChecklistSectionModal.vue';
+import DeleteSectionModal from '@/components/modals/DeleteSectionModal.vue';
 
 export default {
   name: 'SubjectPage',
@@ -92,6 +114,10 @@ export default {
   components: {
     PlusIcon,
     SectionGrid,
+    Modal,
+    EditMarkdownSectionModal,
+    EditChecklistSectionModal,
+    DeleteSectionModal,
   },
 
   setup() {
@@ -102,19 +128,30 @@ export default {
     const showSectionModal = ref(false);
     const newSectionTitle = ref('');
     const newSectionContent = ref('');
+    const showMarkdownEditModal = ref(false);
+    const showChecklistEditModal = ref(false);
+    const showDeleteModal = ref(false);
+    const currentSection = ref(null);
 
     const subject = computed(() => {
       return subjects.value.find((s) => s.id === route.params.subjectId);
     });
 
     const allSections = computed(() => {
-      if (subject.value && subject.value.topics) {
+      if (subject.value) {
         const topicsSection = {
           id: 'topics',
-          title: 'Topics',
-          content: subject.value.topics.map(topic => `- ${topic}`).join('\n')
+          title: 'Tematy',
+          type: 'checklist',
+          items: subject.value.topics || [],
         };
-        return [topicsSection, ...sections.value];
+        const mainBodySection = {
+          id: 'mainBody',
+          title: 'Zasoby',
+          type: 'markdown',
+          content: subject.value.mainBody || '',
+        };
+        return [topicsSection, mainBodySection, ...sections.value];
       }
       return sections.value;
     });
@@ -123,11 +160,18 @@ export default {
       try {
         const sectionsRef = collection(db, 'subjects', subjectId, 'sections');
         const sectionsSnap = await getDocs(sectionsRef);
-        const fetchedSections = sectionsSnap.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-          content: doc.data().content || '',
-        }));
+        const fetchedSections = sectionsSnap.docs.map((doc) => {
+          const { title, type = 'markdown', content, items } = doc.data();
+
+          return {
+            id: doc.id,
+            title,
+            type,
+            content: type === 'markdown' ? content : undefined,
+            items: type === 'checklist' ? items : undefined,
+          };
+        });
+
         sections.value = fetchedSections;
       } catch (error) {
         console.error('Error fetching sections:', error);
@@ -144,7 +188,7 @@ export default {
       }
     });
 
-    const addSection = () => {
+    const openModal = () => {
       showSectionModal.value = true;
     };
 
@@ -160,6 +204,7 @@ export default {
           const sectionsRef = collection(db, 'subjects', subject.value.id, 'sections');
           const newSection = {
             title: newSectionTitle.value.trim(),
+            type: 'markdown',
             content: newSectionContent.value.trim(),
           };
           const docRef = await addDoc(sectionsRef, newSection);
@@ -171,9 +216,107 @@ export default {
       }
     };
 
-    const handleOutsideSectionClick = (event) => {
-      if (event.target === event.currentTarget) {
-        cancelAddSection();
+    const openEditModal = (section) => {
+      currentSection.value = section;
+      if (section.type === 'markdown') {
+        showMarkdownEditModal.value = true;
+      } else if (section.type === 'checklist') {
+        showChecklistEditModal.value = true;
+      }
+    };
+
+    const closeEditModal = () => {
+      showMarkdownEditModal.value = false;
+      showChecklistEditModal.value = false;
+      currentSection.value = null;
+      nextTick(() => {
+        // Ensure the modal is fully closed before resetting currentSection
+        currentSection.value = null;
+      });
+    };
+
+    const updateSection = async (updatedSection) => {
+      try {
+        if (updatedSection.id === 'topics') {
+          await updateDoc(doc(db, 'subjects', subject.value.id), {
+            topics: updatedSection.items,
+          });
+          subject.value.topics = updatedSection.items;
+        } else if (updatedSection.id === 'mainBody') {
+          await updateDoc(doc(db, 'subjects', subject.value.id), {
+            mainBody: updatedSection.content,
+          });
+          subject.value.mainBody = updatedSection.content;
+        } else {
+          const sectionData = {
+            title: updatedSection.title,
+            type: updatedSection.type,
+            content: updatedSection.content
+          };
+          await updateDoc(
+            doc(db, 'subjects', subject.value.id, 'sections', updatedSection.id),
+            sectionData
+          );
+          const index = sections.value.findIndex(s => s.id === updatedSection.id);
+          if (index !== -1) {
+            sections.value[index] = updatedSection;
+          }
+        }
+        closeEditModal();
+      } catch (error) {
+        console.error('Error updating section:', error);
+      }
+    };
+
+    const openDeleteModal = (section) => {
+      currentSection.value = section;
+      showDeleteModal.value = true;
+    };
+
+    const closeDeleteModal = () => {
+      showDeleteModal.value = false;
+      currentSection.value = null;
+    };
+
+    const confirmDeleteSection = async () => {
+      try {
+        // Delete the section from Firestore
+        await deleteDoc(doc(db, 'subjects', subject.value.id, 'sections', currentSection.value.id));
+        // Update the local state
+        sections.value = sections.value.filter(s => s.id !== currentSection.value.id);
+        closeDeleteModal();
+      } catch (error) {
+        console.error('Error deleting section:', error);
+      }
+    };
+
+    const handleToggleItem = async ({ sectionId, itemIndex }) => {
+      console.log('>>handleToggleItem', sectionId, itemIndex);
+
+      try {
+        if (sectionId === 'topics') {
+          const updatedTopics = [...subject.value.topics];
+          updatedTopics[itemIndex].checked = !updatedTopics[itemIndex].checked;
+          await updateDoc(doc(db, 'subjects', subject.value.id), {
+            topics: updatedTopics,
+          });
+          subject.value.topics = updatedTopics;
+        } else {
+          const sectionRef = doc(db, 'subjects', subject.value.id, 'sections', sectionId);
+          const sectionDoc = await getDoc(sectionRef);
+          if (sectionDoc.exists()) {
+            const sectionData = sectionDoc.data();
+            const updatedItems = [...sectionData.items];
+            updatedItems[itemIndex].checked = !updatedItems[itemIndex].checked;
+            await updateDoc(sectionRef, { items: updatedItems });
+            const index = sections.value.findIndex(s => s.id === sectionId);
+            if (index !== -1) {
+              sections.value[index].items = updatedItems;
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Error toggling item:', error);
       }
     };
 
@@ -184,11 +327,22 @@ export default {
       showSectionModal,
       newSectionTitle,
       newSectionContent,
-      addSection,
+      openModal,
       cancelAddSection,
       confirmAddSection,
-      handleOutsideSectionClick,
+      showMarkdownEditModal,
+      showChecklistEditModal,
+      showDeleteModal,
+      currentSection,
+      openEditModal,
+      closeEditModal,
+      updateSection,
+      openDeleteModal,
+      closeDeleteModal,
+      confirmDeleteSection,
+      handleToggleItem,
     };
   },
 };
 </script>
+

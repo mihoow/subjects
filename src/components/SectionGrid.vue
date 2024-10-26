@@ -3,16 +3,19 @@
     <div
       v-for="section in sections"
       :key="section.id"
-      class="bg-gray-750 rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition-shadow duration-300"
+      class="bg-gray-750 rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition-shadow duration-300 relative group"
     >
       <div class="p-6">
         <h2 class="text-2xl font-bold mb-4 text-blue-400">{{ section.title }}</h2>
-        <div class="prose prose-invert max-w-none">
-          <Markdown
-            :source="section.content"
-            :plugins="plugins"
-          />
-        </div>
+        <component :is="getSectionComponent(section.type)" :section="section" @toggle-item="handleToggleItem" />
+      </div>
+      <div class="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+        <button @click="editSection(section)" class="p-1 bg-blue-500 text-white rounded mr-2">
+          <PencilIcon class="h-5 w-5" />
+        </button>
+        <button v-if="!isSpecialSection(section.id)" @click="deleteSection(section)" class="p-1 bg-red-500 text-white rounded">
+          <TrashIcon class="h-5 w-5" />
+        </button>
       </div>
     </div>
   </div>
@@ -20,48 +23,48 @@
 
 <script>
 import { defineComponent } from 'vue';
-import Markdown from 'vue3-markdown-it';
-import Sub from 'markdown-it-sub';
-import Sup from 'markdown-it-sup';
-import Footnote from 'markdown-it-footnote';
-import Deflist from 'markdown-it-deflist';
-import Abbr from 'markdown-it-abbr';
-import Ins from 'markdown-it-ins';
-import Mark from 'markdown-it-mark';
-import Anchor from 'markdown-it-anchor';
-import Toc from 'markdown-it-toc-done-right';
-import Tasklists from 'markdown-it-task-lists';
-import Katex from 'markdown-it-katex';
-import Highlightjs from 'markdown-it-highlightjs';
+import { PencilIcon, TrashIcon } from '@heroicons/vue/24/solid';
+import MarkdownSection from './sections/MarkdownSection.vue';
+import ChecklistSection from './sections/ChecklistSection.vue';
 
 export default defineComponent({
   name: 'SectionGrid',
   components: {
-    Markdown,
+    MarkdownSection,
+    ChecklistSection,
+    PencilIcon,
+    TrashIcon,
   },
   props: {
     sections: {
       type: Array,
       required: true,
     },
+    specialSections: {
+      type: Array,
+      default: () => [],
+    },
   },
-  data() {
-    return {
-      plugins: [
-        { plugin: Sub },
-        { plugin: Sup },
-        { plugin: Footnote },
-        { plugin: Deflist },
-        { plugin: Abbr },
-        { plugin: Ins },
-        { plugin: Mark },
-        { plugin: Anchor },
-        { plugin: Toc },
-        { plugin: Tasklists },
-        { plugin: Katex },
-        { plugin: Highlightjs, options: { inline: true } },
-      ],
-    };
+  methods: {
+    getSectionComponent(type) {
+      const componentMap = {
+        markdown: MarkdownSection,
+        checklist: ChecklistSection,
+      };
+      return componentMap[type || 'markdown'] || MarkdownSection;
+    },
+    editSection(section) {
+      this.$emit('edit', section);
+    },
+    deleteSection(section) {
+      this.$emit('delete', section);
+    },
+    isSpecialSection(sectionId) {
+      return this.specialSections.includes(sectionId);
+    },
+    handleToggleItem(payload) {
+      this.$emit('toggle-item', payload);
+    },
   },
 });
 </script>

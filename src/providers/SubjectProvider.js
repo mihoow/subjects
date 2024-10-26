@@ -8,10 +8,17 @@ export function useSubjects() {
   const fetchSubjects = async () => {
     try {
       const querySnapshot = await getDocs(collection(db, 'subjects'))
-      subjects.value = querySnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }))
+      subjects.value = querySnapshot.docs.map(doc => {
+        const { name, usosLink, topics = [], mainBody } = doc.data()
+
+        return {
+          id: doc.id,
+          name,
+          usosLink,
+          topics,
+          mainBody
+        }
+      })
     } catch (error) {
       console.error('Error fetching subjects:', error)
     }
