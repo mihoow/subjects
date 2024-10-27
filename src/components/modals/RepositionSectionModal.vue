@@ -1,9 +1,12 @@
 <template>
-  <Modal :isOpen="isOpen" title="Zmień pozycję sekcji" @close="closeModal" @submit="handleSubmit">
+  <Modal
+    :isOpen="isOpen"
+    title="Zmień pozycję sekcji"
+    @close="closeModal"
+    @submit="handleSubmit"
+  >
     <div class="flex flex-col space-y-4">
-      <p class="text-gray-300 mb-4">
-        Wybierz nową pozycję dla sekcji "{{ section?.title }}"
-      </p>
+      <p class="text-gray-300 mb-4">Wybierz nową pozycję dla sekcji "{{ section?.title }}"</p>
 
       <div class="grid grid-cols-2 gap-4">
         <div
@@ -12,29 +15,20 @@
           @click="selectedPosition = position"
           class="bg-gray-750 rounded-lg p-4 cursor-pointer transition-all duration-200 relative"
           :class="[
-            selectedPosition === position 
-              ? 'border-2 border-blue-500 shadow-lg shadow-blue-500/20' 
-              : 'border-2 border-gray-600 hover:border-blue-400'
+            selectedPosition === position
+              ? 'border-2 border-blue-500 shadow-lg shadow-blue-500/20'
+              : 'border-2 border-gray-600 hover:border-blue-400',
           ]"
         >
           <div class="flex items-center justify-between mb-2">
-            <span class="text-lg font-semibold text-blue-400">
-              Pozycja {{ position + 1 }}
-            </span>
-            <div 
+            <span class="text-lg font-semibold text-blue-400"> Pozycja {{ position + 1 }} </span>
+            <div
               class="w-4 h-4 rounded-full"
-              :class="[
-                selectedPosition === position 
-                  ? 'bg-blue-500' 
-                  : 'bg-gray-600'
-              ]"
+              :class="[selectedPosition === position ? 'bg-blue-500' : 'bg-gray-600']"
             ></div>
           </div>
           <div class="text-sm text-gray-400">
-            {{ position === props.currentPosition 
-              ? 'Aktualna pozycja' 
-              : `Przenieś na pozycję ${position + 1}` 
-            }}
+            {{ position === props.currentPosition ? 'Aktualna pozycja' : `Przenieś na pozycję ${position + 1}` }}
           </div>
         </div>
       </div>
@@ -54,11 +48,11 @@ export default defineComponent({
     section: Object,
     totalSections: {
       type: Number,
-      required: true
+      required: true,
     },
     currentPosition: {
       type: Number,
-      required: true
+      required: true,
     },
   },
 
@@ -87,10 +81,10 @@ export default defineComponent({
 
     const handleSubmit = () => {
       if (!props.section) return;
-      
+
       emit('submit', {
         sectionId: props.section.id,
-        newPosition: selectedPosition.value
+        newPosition: selectedPosition.value,
       });
     };
 
@@ -99,7 +93,7 @@ export default defineComponent({
       availablePositions,
       closeModal,
       handleSubmit,
-      props // Expose props to the template
+      props, // Expose props to the template
     };
   },
 });

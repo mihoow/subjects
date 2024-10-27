@@ -1,8 +1,15 @@
 <template>
-  <div class="text-white">
-    <div v-if="subject">
-      <div class="flex justify-between items-center mb-6">
+  <div class="text-white h-full flex flex-col overflow-hidden custom-scrollbar">
+    <div v-if="subject" class="h-full flex flex-col">
+      <div class="flex items-center mb-6 space-x-4 flex-shrink-0">
+        <button
+          @click="$router.go(-1)"
+          class="bg-blue-500 p-2 rounded-md hover:bg-blue-600 transition-colors duration-200"
+        >
+          <ArrowLeftIcon class="h-5 w-5" />
+        </button>
         <h1 class="text-4xl font-bold">{{ subject.name }}</h1>
+        <div class="flex-grow"></div>
         <button
           @click="openModal"
           class="bg-green-500 text-white px-4 py-2 rounded-md flex items-center hover:bg-green-600 transition-colors duration-200"
@@ -12,9 +19,15 @@
         </button>
       </div>
 
-      <div v-if="loading">Ładowanie sekcji...</div>
+      <div
+        v-if="loading"
+        class="flex-1 overflow-auto"
+      >
+        Ładowanie sekcji...
+      </div>
       <SectionGrid
         v-else
+        class="flex-1 overflow-auto"
         :sections="allSections"
         :specialSections="['topics', 'mainBody']"
         @edit="openEditModal"
@@ -22,13 +35,6 @@
         @toggle-item="handleToggleItem"
         @reposition="openRepositionModal"
       />
-
-      <button
-        @click="$router.push('/')"
-        class="mt-8 bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 transition-colors duration-200"
-      >
-        Powrót do listy przedmiotów
-      </button>
 
       <Modal
         :isOpen="showSectionModal"
@@ -109,7 +115,7 @@
 <script>
 import { ref, onMounted, computed, nextTick } from 'vue';
 import { useRoute } from 'vue-router';
-import { PlusIcon } from '@heroicons/vue/24/solid';
+import { PlusIcon, ArrowLeftIcon } from '@heroicons/vue/24/solid';
 import { useSubjects } from '@/providers/SubjectProvider';
 import { collection, getDocs, addDoc, updateDoc, doc, deleteDoc, getDoc, writeBatch } from 'firebase/firestore';
 import { db } from '@/firebase';
@@ -125,6 +131,7 @@ export default {
 
   components: {
     PlusIcon,
+    ArrowLeftIcon,
     SectionGrid,
     Modal,
     EditMarkdownSectionModal,
@@ -165,7 +172,7 @@ export default {
         const sectionsRef = collection(db, 'subjects', subjectId, 'sections');
         const sectionsSnap = await getDocs(sectionsRef);
         const fetchedSections = sectionsSnap.docs.map((doc) => {
-          const { title, type = 'markdown', content, items, position = null } = doc.data();
+          const { title, type = 'markdown', content, items, position = null, required = false } = doc.data();
 
           return {
             id: doc.id,
@@ -173,7 +180,8 @@ export default {
             type,
             content: type === 'markdown' ? content : undefined,
             items: type === 'checklist' ? items : undefined,
-            position: position,
+            position,
+            required,
           };
         });
 
@@ -204,22 +212,51 @@ export default {
     };
 
     const confirmAddSection = async () => {
-      if (newSectionTitle.value.trim() && newSectionContent.value.trim() && subject.value) {
-        try {
-          const sectionsRef = collection(db, 'subjects', subject.value.id, 'sections');
-          const newPosition = sections.value.length;
-          const newSection = {
-            title: newSectionTitle.value.trim(),
-            type: 'markdown',
-            content: newSectionContent.value.trim(),
-            position: newPosition,
-          };
-          const docRef = await addDoc(sectionsRef, newSection);
-          sections.value.push({ id: docRef.id, ...newSection });
-          cancelAddSection();
-        } catch (error) {
-          console.error('Error adding section:', error);
-        }
+      const title = newSectionTitle.value.trim();
+      const content = newSectionContent.value.trim();
+
+      if (!title || !content) {
+        console.error('Title and content are required');
+        return;
+      }
+
+      if (!subject.value?.id) {
+        console.error('No subject selected');
+        return;
+      }
+
+      try {
+        const sectionsRef = collection(db, 'subjects', subject.value.id, 'sections');
+
+        // Calculate new position
+        const newPosition = allSections.value.length;
+
+        const newSection = {
+          title,
+          type: 'markdown',
+          content,
+          position: newPosition,
+          required: false,
+        };
+
+        // Add document to Firestore
+        const docRef = await addDoc(sectionsRef, newSection);
+
+        // Update local state
+        sections.value = [
+          ...sections.value,
+          {
+            id: docRef.id,
+            ...newSection,
+          },
+        ];
+
+        // Close modal and reset form
+        showSectionModal.value = false;
+        newSectionTitle.value = '';
+        newSectionContent.value = '';
+      } catch (error) {
+        console.error('Error adding section:', error);
       }
     };
 
@@ -341,28 +378,28 @@ export default {
       try {
         const batch = writeBatch(db);
         const sectionsRef = collection(db, 'subjects', subject.value.id, 'sections');
-        const currentSection = sections.value.find(s => s.id === sectionId);
+        const currentSection = sections.value.find((s) => s.id === sectionId);
         const oldPosition = currentSection.position;
 
         // Moving section down
         if (newPosition > oldPosition) {
           sections.value
-            .filter(s => s.position > oldPosition && s.position <= newPosition)
-            .forEach(section => {
+            .filter((s) => s.position > oldPosition && s.position <= newPosition)
+            .forEach((section) => {
               const sectionRef = doc(sectionsRef, section.id);
               batch.update(sectionRef, {
-                position: section.position - 1
+                position: section.position - 1,
               });
             });
         }
         // Moving section up
         else if (newPosition < oldPosition) {
           sections.value
-            .filter(s => s.position >= newPosition && s.position < oldPosition)
-            .forEach(section => {
+            .filter((s) => s.position >= newPosition && s.position < oldPosition)
+            .forEach((section) => {
               const sectionRef = doc(sectionsRef, section.id);
               batch.update(sectionRef, {
-                position: section.position + 1
+                position: section.position + 1,
               });
             });
         }
@@ -412,3 +449,44 @@ export default {
 };
 </script>
 
+<style scoped>
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(59, 130, 246, 0.5) rgba(45, 55, 72, 0.3);
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 8px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: rgba(45, 55, 72, 0.3);
+  border-radius: 8px;
+  margin: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: linear-gradient(
+    to bottom,
+    rgba(59, 130, 246, 0.5),
+    rgba(37, 99, 235, 0.6)
+  );
+  border-radius: 8px;
+  border: 1px solid rgba(59, 130, 246, 0.2);
+  box-shadow: 
+    inset 0 0 6px rgba(0, 0, 0, 0.2),
+    0 0 4px rgba(59, 130, 246, 0.3);
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(
+    to bottom,
+    rgba(59, 130, 246, 0.7),
+    rgba(37, 99, 235, 0.8)
+  );
+}
+
+.custom-scrollbar {
+  scroll-behavior: smooth;
+}
+</style>
