@@ -18,7 +18,7 @@
         :key="subject.id"
         :id="subject.id"
         :title="subject.name"
-        :topics="[]"
+        :resources="subject.resources"
       />
     </div>
 
@@ -100,3 +100,4 @@ export default {
   }
 }
 </script>
+

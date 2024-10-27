@@ -63,7 +63,9 @@ export default defineComponent({
         id: props.section.id,
         type: 'markdown',
         title: props.section.title,
-        content: editedContent.value
+        content: editedContent.value,
+        position: props.section.position,
+        required: props.section.required,
       };
       emit('submit', updatedSection);
     };

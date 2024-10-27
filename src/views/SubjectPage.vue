@@ -281,18 +281,7 @@ export default {
 
     const updateSection = async (updatedSection) => {
       try {
-        const sectionData = {
-          title: updatedSection.title,
-          type: updatedSection.type,
-        };
-
-        if (updatedSection.type === 'markdown') {
-          sectionData.content = updatedSection.content;
-        } else if (updatedSection.type === 'checklist') {
-          sectionData.items = updatedSection.items;
-        }
-
-        await updateDoc(doc(db, 'subjects', subject.value.id, 'sections', updatedSection.id), sectionData);
+        await updateDoc(doc(db, 'subjects', subject.value.id, 'sections', updatedSection.id), updatedSection);
         const { id: sectionId } = updatedSection;
         const index = sections.value.findIndex((s) => s.id === sectionId);
         if (index !== -1) {
