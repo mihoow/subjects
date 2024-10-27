@@ -17,8 +17,8 @@
         v-for="subject in subjects"
         :key="subject.id"
         :id="subject.id"
-        :title="subject.title"
-        :topics="subject.topics"
+        :title="subject.name"
+        :topics="[]"
       />
     </div>
 
@@ -33,6 +33,12 @@
         v-model="newSubjectName"
         type="text"
         placeholder="Enter subject name"
+        class="w-full p-2 bg-gray-700 border border-gray-600 rounded mb-4 text-white placeholder-gray-400"
+      />
+      <input
+        v-model="newUsosLink"
+        type="text"
+        placeholder="Enter USOS link (optional)"
         class="w-full p-2 bg-gray-700 border border-gray-600 rounded mb-4 text-white placeholder-gray-400"
       />
     </Modal>
@@ -59,6 +65,7 @@ export default {
     const { subjects, addSubject } = useSubjects()
     const showModal = ref(false)
     const newSubjectName = ref('')
+    const newUsosLink = ref('')
 
     const openModal = () => {
       showModal.value = true
@@ -67,13 +74,14 @@ export default {
     const closeModal = () => {
       showModal.value = false
       newSubjectName.value = ''
+      newUsosLink.value = ''
     }
 
     const confirmAddSubject = async () => {
       if (newSubjectName.value.trim()) {
         const newSubject = {
           title: newSubjectName.value.trim(),
-          topics: [],
+          usosLink: newUsosLink.value.trim(),
         }
         await addSubject(newSubject)
         closeModal()
@@ -84,6 +92,7 @@ export default {
       subjects,
       showModal,
       newSubjectName,
+      newUsosLink,
       openModal,
       closeModal,
       confirmAddSubject,

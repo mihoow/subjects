@@ -13,7 +13,10 @@
         <button @click="editSection(section)" class="p-1 bg-blue-500 text-white rounded mr-2">
           <PencilIcon class="h-5 w-5" />
         </button>
-        <button v-if="!isSpecialSection(section.id)" @click="deleteSection(section)" class="p-1 bg-red-500 text-white rounded">
+        <button @click="repositionSection(section)" class="p-1 bg-yellow-500 text-white rounded mr-2">
+          <ArrowsPointingOutIcon class="h-5 w-5" />
+        </button>
+        <button v-if="!section.required" @click="deleteSection(section)" class="p-1 bg-red-500 text-white rounded">
           <TrashIcon class="h-5 w-5" />
         </button>
       </div>
@@ -23,7 +26,7 @@
 
 <script>
 import { defineComponent } from 'vue';
-import { PencilIcon, TrashIcon } from '@heroicons/vue/24/solid';
+import { PencilIcon, TrashIcon, ArrowsPointingOutIcon } from '@heroicons/vue/24/solid';
 import MarkdownSection from './sections/MarkdownSection.vue';
 import ChecklistSection from './sections/ChecklistSection.vue';
 
@@ -34,6 +37,7 @@ export default defineComponent({
     ChecklistSection,
     PencilIcon,
     TrashIcon,
+    ArrowsPointingOutIcon,
   },
   props: {
     sections: {
@@ -45,6 +49,7 @@ export default defineComponent({
       default: () => [],
     },
   },
+  emits: ['edit', 'delete', 'reposition', 'toggle-item'],
   methods: {
     getSectionComponent(type) {
       const componentMap = {
@@ -53,17 +58,25 @@ export default defineComponent({
       };
       return componentMap[type || 'markdown'] || MarkdownSection;
     },
+
     editSection(section) {
       this.$emit('edit', section);
     },
+
     deleteSection(section) {
       this.$emit('delete', section);
     },
+
     isSpecialSection(sectionId) {
       return this.specialSections.includes(sectionId);
     },
+
     handleToggleItem(payload) {
       this.$emit('toggle-item', payload);
+    },
+
+    repositionSection(section) {
+      this.$emit('reposition', section);
     },
   },
 });
@@ -75,10 +88,12 @@ export default defineComponent({
 }
 
 .shadow-lg {
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 
+              0 4px 6px -2px rgba(0, 0, 0, 0.05);
 }
 
 .hover\:shadow-xl:hover {
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 
+              0 10px 10px -5px rgba(0, 0, 0, 0.04);
 }
 </style>

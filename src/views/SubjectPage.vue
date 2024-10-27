@@ -20,6 +20,7 @@
         @edit="openEditModal"
         @delete="openDeleteModal"
         @toggle-item="handleToggleItem"
+        @reposition="openRepositionModal"
       />
 
       <button
@@ -73,6 +74,16 @@
         @close="closeDeleteModal"
         @submit="confirmDeleteSection"
       />
+
+      <RepositionSectionModal
+        v-if="showRepositionModal"
+        :isOpen="showRepositionModal"
+        :section="currentSection"
+        :currentPosition="getCurrentSectionPosition"
+        :totalSections="allSections.length"
+        @close="closeRepositionModal"
+        @submit="handleReposition"
+      />
     </div>
     <div
       v-else-if="loading"
@@ -100,13 +111,14 @@ import { ref, onMounted, computed, nextTick } from 'vue';
 import { useRoute } from 'vue-router';
 import { PlusIcon } from '@heroicons/vue/24/solid';
 import { useSubjects } from '@/providers/SubjectProvider';
-import { collection, getDocs, addDoc, updateDoc, doc, deleteDoc, getDoc } from 'firebase/firestore';
+import { collection, getDocs, addDoc, updateDoc, doc, deleteDoc, getDoc, writeBatch } from 'firebase/firestore';
 import { db } from '@/firebase';
 import SectionGrid from '@/components/SectionGrid.vue';
 import Modal from '@/components/Modal.vue';
 import EditMarkdownSectionModal from '@/components/modals/EditMarkdownSectionModal.vue';
 import EditChecklistSectionModal from '@/components/modals/EditChecklistSectionModal.vue';
 import DeleteSectionModal from '@/components/modals/DeleteSectionModal.vue';
+import RepositionSectionModal from '@/components/modals/RepositionSectionModal.vue';
 
 export default {
   name: 'SubjectPage',
@@ -118,6 +130,7 @@ export default {
     EditMarkdownSectionModal,
     EditChecklistSectionModal,
     DeleteSectionModal,
+    RepositionSectionModal,
   },
 
   setup() {
@@ -132,28 +145,19 @@ export default {
     const showChecklistEditModal = ref(false);
     const showDeleteModal = ref(false);
     const currentSection = ref(null);
+    const showRepositionModal = ref(false);
 
     const subject = computed(() => {
       return subjects.value.find((s) => s.id === route.params.subjectId);
     });
 
     const allSections = computed(() => {
-      if (subject.value) {
-        const topicsSection = {
-          id: 'topics',
-          title: 'Tematy',
-          type: 'checklist',
-          items: subject.value.topics || [],
-        };
-        const mainBodySection = {
-          id: 'mainBody',
-          title: 'Zasoby',
-          type: 'markdown',
-          content: subject.value.mainBody || '',
-        };
-        return [topicsSection, mainBodySection, ...sections.value];
-      }
-      return sections.value;
+      return [...sections.value].sort((a, b) => {
+        // If either position is null/undefined, treat it as max value
+        if (a.position === null || a.position === undefined) return 1;
+        if (b.position === null || b.position === undefined) return -1;
+        return a.position - b.position;
+      });
     });
 
     const fetchSections = async (subjectId) => {
@@ -161,7 +165,7 @@ export default {
         const sectionsRef = collection(db, 'subjects', subjectId, 'sections');
         const sectionsSnap = await getDocs(sectionsRef);
         const fetchedSections = sectionsSnap.docs.map((doc) => {
-          const { title, type = 'markdown', content, items } = doc.data();
+          const { title, type = 'markdown', content, items, position = null } = doc.data();
 
           return {
             id: doc.id,
@@ -169,6 +173,7 @@ export default {
             type,
             content: type === 'markdown' ? content : undefined,
             items: type === 'checklist' ? items : undefined,
+            position: position,
           };
         });
 
@@ -202,10 +207,12 @@ export default {
       if (newSectionTitle.value.trim() && newSectionContent.value.trim() && subject.value) {
         try {
           const sectionsRef = collection(db, 'subjects', subject.value.id, 'sections');
+          const newPosition = sections.value.length;
           const newSection = {
             title: newSectionTitle.value.trim(),
             type: 'markdown',
             content: newSectionContent.value.trim(),
+            position: newPosition,
           };
           const docRef = await addDoc(sectionsRef, newSection);
           sections.value.push({ id: docRef.id, ...newSection });
@@ -237,30 +244,22 @@ export default {
 
     const updateSection = async (updatedSection) => {
       try {
-        if (updatedSection.id === 'topics') {
-          await updateDoc(doc(db, 'subjects', subject.value.id), {
-            topics: updatedSection.items,
-          });
-          subject.value.topics = updatedSection.items;
-        } else if (updatedSection.id === 'mainBody') {
-          await updateDoc(doc(db, 'subjects', subject.value.id), {
-            mainBody: updatedSection.content,
-          });
-          subject.value.mainBody = updatedSection.content;
-        } else {
-          const sectionData = {
-            title: updatedSection.title,
-            type: updatedSection.type,
-            content: updatedSection.content
-          };
-          await updateDoc(
-            doc(db, 'subjects', subject.value.id, 'sections', updatedSection.id),
-            sectionData
-          );
-          const index = sections.value.findIndex(s => s.id === updatedSection.id);
-          if (index !== -1) {
-            sections.value[index] = updatedSection;
-          }
+        const sectionData = {
+          title: updatedSection.title,
+          type: updatedSection.type,
+        };
+
+        if (updatedSection.type === 'markdown') {
+          sectionData.content = updatedSection.content;
+        } else if (updatedSection.type === 'checklist') {
+          sectionData.items = updatedSection.items;
+        }
+
+        await updateDoc(doc(db, 'subjects', subject.value.id, 'sections', updatedSection.id), sectionData);
+        const { id: sectionId } = updatedSection;
+        const index = sections.value.findIndex((s) => s.id === sectionId);
+        if (index !== -1) {
+          sections.value[index] = updatedSection;
         }
         closeEditModal();
       } catch (error) {
@@ -283,7 +282,7 @@ export default {
         // Delete the section from Firestore
         await deleteDoc(doc(db, 'subjects', subject.value.id, 'sections', currentSection.value.id));
         // Update the local state
-        sections.value = sections.value.filter(s => s.id !== currentSection.value.id);
+        sections.value = sections.value.filter((s) => s.id !== currentSection.value.id);
         closeDeleteModal();
       } catch (error) {
         console.error('Error deleting section:', error);
@@ -291,8 +290,6 @@ export default {
     };
 
     const handleToggleItem = async ({ sectionId, itemIndex }) => {
-      console.log('>>handleToggleItem', sectionId, itemIndex);
-
       try {
         if (sectionId === 'topics') {
           const updatedTopics = [...subject.value.topics];
@@ -309,7 +306,7 @@ export default {
             const updatedItems = [...sectionData.items];
             updatedItems[itemIndex].checked = !updatedItems[itemIndex].checked;
             await updateDoc(sectionRef, { items: updatedItems });
-            const index = sections.value.findIndex(s => s.id === sectionId);
+            const index = sections.value.findIndex((s) => s.id === sectionId);
             if (index !== -1) {
               sections.value[index].items = updatedItems;
             }
@@ -317,6 +314,70 @@ export default {
         }
       } catch (error) {
         console.error('Error toggling item:', error);
+      }
+    };
+
+    const getCurrentSectionPosition = computed(() => {
+      if (!currentSection.value) return 0;
+      return currentSection.value.position;
+    });
+
+    const openRepositionModal = (section) => {
+      currentSection.value = section;
+      showRepositionModal.value = true;
+    };
+
+    const closeRepositionModal = () => {
+      showRepositionModal.value = false;
+      currentSection.value = null;
+    };
+
+    const handleReposition = async ({ sectionId, newPosition } = {}) => {
+      if (!sectionId || newPosition === undefined) {
+        closeRepositionModal();
+        return;
+      }
+
+      try {
+        const batch = writeBatch(db);
+        const sectionsRef = collection(db, 'subjects', subject.value.id, 'sections');
+        const currentSection = sections.value.find(s => s.id === sectionId);
+        const oldPosition = currentSection.position;
+
+        // Moving section down
+        if (newPosition > oldPosition) {
+          sections.value
+            .filter(s => s.position > oldPosition && s.position <= newPosition)
+            .forEach(section => {
+              const sectionRef = doc(sectionsRef, section.id);
+              batch.update(sectionRef, {
+                position: section.position - 1
+              });
+            });
+        }
+        // Moving section up
+        else if (newPosition < oldPosition) {
+          sections.value
+            .filter(s => s.position >= newPosition && s.position < oldPosition)
+            .forEach(section => {
+              const sectionRef = doc(sectionsRef, section.id);
+              batch.update(sectionRef, {
+                position: section.position + 1
+              });
+            });
+        }
+
+        // Update the moved section
+        const movedSectionRef = doc(sectionsRef, sectionId);
+        batch.update(movedSectionRef, { position: newPosition });
+
+        await batch.commit();
+
+        // Update local state
+        await fetchSections(subject.value.id);
+        closeRepositionModal();
+      } catch (error) {
+        console.error('Error repositioning section:', error);
       }
     };
 
@@ -341,6 +402,11 @@ export default {
       closeDeleteModal,
       confirmDeleteSection,
       handleToggleItem,
+      showRepositionModal,
+      openRepositionModal,
+      closeRepositionModal,
+      handleReposition,
+      getCurrentSectionPosition,
     };
   },
 };

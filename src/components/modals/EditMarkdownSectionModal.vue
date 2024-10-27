@@ -41,7 +41,7 @@ export default defineComponent({
     const plugins = markdownPlugins;
 
     const modalTitle = computed(() => {
-      return props.section?.id === 'mainBody' ? 'Edytuj Zasoby' : 'Edytuj Sekcję';
+      return props.section?.id === 'resources' ? 'Edytuj Zasoby' : 'Edytuj Sekcję';
     });
 
     watch(

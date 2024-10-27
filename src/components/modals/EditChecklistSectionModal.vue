@@ -59,12 +59,15 @@ export default defineComponent({
       { immediate: true }
     );
 
-    const addItem = (event) => {
-      event.preventDefault();
+    const addItem = () => {
       items.value.push({ text: '', checked: false });
     };
 
     const removeItem = (index) => {
+      if (props.section.id === 'topics' && items.value.length <= 1) {
+        alert('At least one topic is required.');
+        return;
+      }
       items.value.splice(index, 1);
     };
 
