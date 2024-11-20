@@ -1,44 +1,106 @@
 <template>
-  <div class="min-h-screen h-screen bg-gray-900 text-gray-100 flex p-10 relative overflow-hidden">
-    <Sidebar class="z-20" />
-    <div
-      ref="mainContent"
-      class="flex-1 flex flex-col ml-56 relative"
-    >
-      <div class="flex justify-end mb-6 relative z-30">
-        <Header />
+  <MatrixRain>
+    <div class="h-full flex flex-col">
+      <nav class="w-full py-4 flex items-center justify-center gap-16">
+        <Link
+          v-for="{ to, icon, label } in internalLinks"
+          :key="to"
+          variant="internal"
+          :to="to"
+          :icon="icon"
+          :label="label"
+          customClass="hover:scale-110 transform transition-transform duration-300"
+        />
+      </nav>
+      <div class="w-full flex-1 flex max-h-[calc(100vh-88px)]">
+        <main class="flex-grow ml-[112px] mb-12">
+          <router-view />
+        </main>
+        <aside class="flex flex-col gap-8 px-6">
+          <Link
+            v-for="{ to, icon } in externalLinks"
+            :key="to"
+            variant="external"
+            :to="to"
+            :icon="icon"
+            customClass="hover:scale-110 transform transition-transform duration-300"
+          />
+        </aside>
       </div>
-      <main class="flex-1 bg-gray-800 rounded-2xl p-6 pl-16 pr-8 text-gray-100 shadow-lg relative z-10 overflow-hidden">
-        <router-view class="h-full"></router-view>
-      </main>
     </div>
-  </div>
+  </MatrixRain>
 </template>
 
 <script>
-import Sidebar from './components/Sidebar.vue'
-import Header from './components/Header.vue'
+import MatrixRain from './components/MatrixRain.vue';
+import Link from './components/Link.vue';
+import { AcademicCapIcon, CalendarDaysIcon, ClockIcon } from '@heroicons/vue/24/outline';
+import HookIcon from './components/icons/HookIcon.vue';
+import UniversityLogo from './components/icons/UniversityLogo.vue';
+import MessengerIcon from './components/icons/MessengerIcon.vue';
+import OutlookIcon from './components/icons/OutlookIcon.vue';
+import MsTeamsIcon from './components/icons/MsTeamsIcon.vue';
 
 export default {
   name: 'App',
   components: {
-    Sidebar,
-    Header
-  }
-}
+    MatrixRain,
+    Link,
+  },
+  data() {
+    return {
+      internalLinks: [
+        {
+          to: '/schedule',
+          icon: CalendarDaysIcon,
+          label: 'Plan zajęć',
+        },
+        {
+          to: '/subjects',
+          icon: AcademicCapIcon,
+          label: 'Przedmioty',
+        },
+        {
+          to: '/deadlines',
+          icon: ClockIcon,
+          label: 'Terminarz',
+        },
+        {
+          to: '/unhooking',
+          icon: HookIcon,
+          label: 'Unhooking',
+        },
+      ],
+      externalLinks: [
+        {
+          to: 'https://usosweb.uni.lodz.pl/kontroler.php?_action=home/index',
+          icon: UniversityLogo,
+          label: 'UOS',
+        },
+        {
+          to: 'https://www.facebook.com/messages/t/8755826891116189',
+          icon: MessengerIcon,
+          label: 'Messenger',
+        },
+        {
+          to: 'https://outlook.office.com/mail',
+          icon: OutlookIcon,
+          label: 'Outlook',
+        },
+        {
+          to: 'https://teams.microsoft.com',
+          icon: MsTeamsIcon,
+          label: 'Teams',
+        },
+      ],
+    };
+  },
+  onMounted() {
+    console.log('App mounted', AcademicCapIcon);
+  },
+};
 </script>
 
 <style>
-body {
-  @apply bg-gray-900;
-}
-
-.header-glow {
-  box-shadow: 
-    0 0 10px rgba(255, 0, 0, 0.3),
-    0 0 20px rgba(255, 0, 0, 0.3),
-    0 0 30px rgba(255, 0, 0, 0.3),
-    0 0 40px rgba(255, 0, 0, 0.3),
-    0 0 70px rgba(255, 0, 0, 0.3);
-}
+/* Add any additional styles here if needed */
 </style>
