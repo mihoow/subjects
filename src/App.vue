@@ -34,7 +34,7 @@
 <script>
 import MatrixRain from './components/MatrixRain.vue';
 import Link from './components/Link.vue';
-import { AcademicCapIcon, CalendarDaysIcon, ClockIcon } from '@heroicons/vue/24/outline';
+import { AcademicCapIcon, ClockIcon } from '@heroicons/vue/24/outline';
 import HookIcon from './components/icons/HookIcon.vue';
 import UniversityLogo from './components/icons/UniversityLogo.vue';
 import MessengerIcon from './components/icons/MessengerIcon.vue';
@@ -51,19 +51,14 @@ export default {
     return {
       internalLinks: [
         {
-          to: '/schedule',
-          icon: CalendarDaysIcon,
-          label: 'Plan zajęć',
-        },
-        {
           to: '/subjects',
           icon: AcademicCapIcon,
           label: 'Przedmioty',
         },
         {
-          to: '/deadlines',
+          to: '/contract',
           icon: ClockIcon,
-          label: 'Terminarz',
+          label: 'Contract',
         },
         {
           to: '/unhooking',

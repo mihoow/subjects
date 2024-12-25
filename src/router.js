@@ -4,6 +4,8 @@ import SchedulePage from './views/SchedulePage.vue';
 import SubjectsPage from './views/SubjectsPage.vue';
 import SubjectDetailsPage from './views/SubjectDetailsPage.vue';
 import UnhookingPage from './views/UnhookingPage.vue';
+import ChoicePointPage from './views/ChoicePointPage.vue';
+import ContractPage from './views/ContractPage.vue';
 
 const routes = [
   {
@@ -31,6 +33,16 @@ const routes = [
     path: '/unhooking',
     name: 'UnhookingPage',
     component: UnhookingPage,
+  },
+  {
+    path: '/choice-point',
+    name: 'ChoicePointPage',
+    component: ChoicePointPage,
+  },
+  {
+    path: '/contract',
+    name: 'ContractPage',
+    component: ContractPage,
   },
 ];
 

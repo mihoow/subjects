@@ -1,0 +1,80 @@
+[
+  {
+    "id": 1,
+    "task": "Wstać najpóźniej o godzinie 9:00",
+    "category": "Rano",
+    "value": 5
+  },
+  {
+    "id": 2,
+    "task": "Wypić szklankę wody z miodem i cytryną",
+    "category": "Rano",
+    "value": 3
+  },
+  {
+    "id": 3,
+    "task": "Spacer na zewnątrz (minimum 5 minut)",
+    "category": "Rano",
+    "value": 5
+  },
+  {
+    "id": 4,
+    "task": "Zjeść śniadanie i umyć zęby",
+    "category": "Rano",
+    "value": 5
+  },
+  {
+    "id": 5,
+    "task": "Przygotować kawę",
+    "category": "Rano",
+    "value": 3
+  },
+  {
+    "id": 6,
+    "task": "Przerwa na obiad o godzinie 14:00",
+    "category": "W pracy",
+    "value": 4
+  },
+  {
+    "id": 7,
+    "task": "Praca między 10 a 18",
+    "category": "W pracy",
+    "value": 6
+  },
+  {
+    "id": 8,
+    "task": "Aktywność fizyczna (bieganie, skakanka, rozciąganie, siłowe)",
+    "category": "Po pracy",
+    "value": 6
+  },
+  {
+    "id": 9,
+    "task": "Obejrzenie wiadomości z mamą o 18:50",
+    "category": "Po pracy",
+    "value": 5
+  },
+  {
+    "id": 10,
+    "task": "Medytacja przez 20 minut",
+    "category": "Po pracy",
+    "value": 5
+  },
+  {
+    "id": 11,
+    "task": "Zjedzenie kolacji",
+    "category": "Po pracy",
+    "value": 4
+  },
+  {
+    "id": 12,
+    "task": "Uczyć się na studia przez około 2 godziny",
+    "category": "Po pracy",
+    "value": 5
+  },
+  {
+    "id": 13,
+    "task": "Położyć się spać najpóźniej o 24:00",
+    "category": "Wieczór",
+    "value": 4
+  }
+]
