@@ -1,7 +1,7 @@
 <template>
   <MatrixRain>
     <div class="h-full flex flex-col">
-      <nav class="w-full py-4 flex items-center justify-center gap-16">
+      <nav class="w-full px-2 py-4 flex items-center lg:justify-center gap-4 lg:gap-16 overflow-x-auto">
         <Link
           v-for="{ to, icon, label } in internalLinks"
           :key="to"
@@ -13,10 +13,10 @@
         />
       </nav>
       <div class="w-full flex-1 flex max-h-[calc(100vh-88px)]">
-        <main class="flex-grow ml-[112px] mb-12">
+        <main class="flex-grow lg:ml-[112px] lg:mb-12">
           <router-view />
         </main>
-        <aside class="flex flex-col gap-8 px-6">
+        <aside class="hidden lg:flex flex-col gap-8 px-6">
           <Link
             v-for="{ to, icon } in externalLinks"
             :key="to"

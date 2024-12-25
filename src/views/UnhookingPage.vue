@@ -1,6 +1,8 @@
 <template>
-  <Box customClass="w-full h-full flex !p-0">
-    <aside class="basis-[420px] bg-gray-700 text-white">
+  <Box
+    customClass="w-full h-full flex flex-col-reverse lg:flex-row !p-0"
+  >
+    <aside class="basis-[420px] bg-gray-700 text-white overflow-y-auto">
       <ul class="w-full my-2 px-2 space-y-1">
         <li
           v-for="({ title, source }, index) in audio"
@@ -24,13 +26,11 @@
 
     <div class="w-full">
       <div class="px-6 p-4 w-full bg-blue-500/50">
-        <h2 class="mb-4 text-white text-2xl font-bold">
+        <h2 class="mb-4 text-white text-2xl font-bold truncate max-w-[calc(100vw-32px)]">
           {{ currentAudioTitle }}
         </h2>
 
-        <div
-          class="mb-8 flex space-x-2"
-        >
+        <div class="mb-8 flex space-x-2">
           <button
             v-for="(option, index) in Array.isArray(currentSource) ? currentSource : [currentSource]"
             :key="index"

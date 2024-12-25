@@ -1,6 +1,6 @@
 <template>
-  <Box class="flex max-h-full">
-    <div class="w-3/4 bg-white rounded-lg">
+  <Box class="flex flex-col lg:flex-row max-h-full">
+    <div class="hidden lg:block lg:w-3/4 bg-white rounded-lg">
       <div class="w-full max-h-full overflow-y-auto p-4">
         <Markdown
           :source="formattedContract"
@@ -9,7 +9,7 @@
       </div>
     </div>
 
-    <div class="grow-1 max-h-full w-1/4 text-white rounded-r-lg">
+    <div class="grow-1 max-h-full lg:w-1/4 text-white rounded-r-lg">
       <div class="p-4 bg-blue-600/50 rounded-tr-lg">
         <h2 class="text-lg font-bold">Na nowy komputer</h2>
 
@@ -25,7 +25,7 @@
         </div>
       </div>
 
-      <div class="max-h-[634px] p-4 overflow-y-auto bg-blue-500/50">
+      <div class="max-h-[calc(100vh-102px-84px-72px)] lg:max-h-[634px] p-2 lg:p-4 overflow-y-auto bg-blue-500/50">
         <div
           v-for="category in categorizedTasks"
           :key="category.name"
@@ -36,7 +36,7 @@
             <li
               v-for="task in category.tasks"
               :key="task.id"
-              class="flex items-center mb-2 cursor-pointer transition-colors hover:bg-green-700 p-2 rounded"
+              class="flex items-center mb-2 cursor-pointer transition-colors lg:hover:bg-green-900 p-2 rounded"
               :class="{ 'bg-green-700': task.completed }"
               @click="toggleTask(task)"
             >
@@ -69,6 +69,9 @@ import contractMarkdown from '@/assets/contract.md';
 import tasksData from '@/assets/tasks.json';
 import Markdown from 'vue3-markdown-it';
 import Box from '@/components/Box.vue';
+import { subscribe, incrementValue, decrementValue } from '@/services/contract';
+
+let unsubscribe;
 
 export default {
   components: {
@@ -77,11 +80,12 @@ export default {
   },
 
   data() {
-    const savedTasks = JSON.parse(localStorage.getItem('tasks')) || tasksData.map((task) => ({ ...task, completed: false }));
+    const savedTasks =
+      JSON.parse(localStorage.getItem('tasks')) || tasksData.map((task) => ({ ...task, completed: false }));
 
     return {
       tasks: savedTasks,
-      currentValue: Number(localStorage.getItem('currentValue')) || 0,
+      currentValue: 0,
       formattedContract: contractMarkdown,
     };
   },
@@ -102,10 +106,15 @@ export default {
   },
 
   methods: {
-    updateValue({ value, completed }) {
+    async updateValue({ value, completed }) {
       this.currentValue += completed ? value : -value;
 
-      localStorage.setItem('currentValue', this.currentValue);
+      if (completed) {
+        await incrementValue(value);
+      } else {
+        await decrementValue(value);
+      }
+
       localStorage.setItem('tasks', JSON.stringify(this.tasks));
     },
 
@@ -123,6 +132,15 @@ export default {
       localStorage.setItem('tasks', JSON.stringify(this.tasks));
     },
   },
+  mounted() {
+    unsubscribe = subscribe((value) => {
+      this.currentValue = value;
+    });
+  },
+  unmounted() {
+    unsubscribe?.();
+    unsubscribe = null;
+  }
 };
 </script>
 
