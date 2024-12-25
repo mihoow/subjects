@@ -3,6 +3,7 @@ import App from './App.vue'
 import router from './router'
 import './assets/tailwind.css'
 import 'highlight.js/styles/monokai.css';
+import './registerServiceWorker'
 
 const app = createApp(App)
 app.use(router)
